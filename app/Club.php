@@ -20,11 +20,8 @@ class Club extends Model
         $index = 0; 
     	foreach ($winners as $index => $winner) {
            // info(strlen($skipIds));
-    		if(strlen($skipIds) > 0){
-    			$skipId   = explode(',', $skipIds);
-    		}else{
-    			$skipId[] = $winner['id'];
-    			$skipIds  = $winner['id']; 
+    		if(strlen($skipIds) == 0){
+    			$skipIds  = $winner['id'];
     		}
     		// calling function to get non winner member list of different countries 
     		$nonWinner = $this->getNonWiningClub($winner['country'], $skipIds); 
