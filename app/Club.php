@@ -19,14 +19,15 @@ class Club extends Model
         $groupIndex = ["A", "B", "C", "D", "E", "F", "G", "H"]; 
         $index = 0; 
     	foreach ($winners as $index => $winner) {
-    		if(isset($skipIds)){
+           // info(strlen($skipIds));
+    		if(strlen($skipIds) > 0){
     			$skipId   = explode(',', $skipIds);
     		}else{
     			$skipId[] = $winner['id'];
     			$skipIds  = $winner['id']; 
     		}
     		// calling function to get non winner member list of different countries 
-    		$nonWinner = $this->getNonWiningClub($winner['country'], $skipId); 
+    		$nonWinner = $this->getNonWiningClub($winner['country'], $skipIds); 
     		// Add winner in to member list 
     		$nonWinner->push($winner); 
     		$memberList = $nonWinner->reverse(); 
@@ -42,7 +43,8 @@ class Club extends Model
 
    	// Private function to get non winner member list of different countries 
     private function getNonWiningClub($countryName, $skipId){
-
+        info($skipId);
+        $skipId = explode(',', $skipId);
     	return  self::select('clubs.*')->where('is_winner', 'No')
     						->where('country', '!=', $countryName)
     						->whereNotIn('id', $skipId)->distinct('clubs.country')
