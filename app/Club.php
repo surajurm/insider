@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
 class Club extends Model
 {
@@ -15,24 +16,37 @@ class Club extends Model
     public function getClubList(){
     	$groups; 
     	$winners  =  self::where('is_winner', 'Yes')->inRandomOrder()->get()->toArray();
-    	$skipIds  =  '';
         $groupIndex = ["A", "B", "C", "D", "E", "F", "G", "H"]; 
         $index = 0; 
+        $skipIds = '';
+        $nonWinner = self::where('is_winner', 'No')->inRandomOrder()->get()->toArray(); 
+
     	foreach ($winners as $index => $winner) {
-           // info(strlen($skipIds));
+
+            $country[] = $winner['country'];
+
+            // info(strlen($skipIds));
     		if(strlen($skipIds) == 0){
     			$skipIds  = $winner['id'];
     		}
-    		// calling function to get non winner member list of different countries 
+    		
     		$nonWinner = $this->getNonWiningClub($winner['country'], $skipIds); 
-    		// Add winner in to member list 
-    		$nonWinner->push($winner); 
-    		$memberList = $nonWinner->reverse(); 
-    		$memberList = json_decode(json_encode(array_merge($memberList->toArray())));
+    		
+            $memberList = Arr::prepend($nonWinner, $winner);
+          
     		$groups[$index]['name'] = 'Group '.$groupIndex[$index];
     		$groups[$index]['members']  = $memberList;
-    		$skipIds = $skipIds.','. implode(',', $nonWinner->pluck('id')->all()); 
-    		$index = $index + 1;
+            info($winner['id']);
+            $memberId  = array_pluck($nonWinner, 'id'); 
+
+            /* dd($memberId);*/
+    		if(strlen($skipIds) == 1){
+                $skipIds = implode(',',$memberId); 
+            }else{
+                $skipIds = $skipIds.','. implode(',',$memberId);    
+            }
+    		//dd($skipIds);
+            $index = $index + 1;
     	}
     	return array_chunk($groups, 4);
     }
@@ -40,12 +54,22 @@ class Club extends Model
 
    	// Private function to get non winner member list of different countries 
     private function getNonWiningClub($countryName, $skipId){
-        info($skipId);
-        $skipId = explode(',', $skipId);
-    	return  self::select('clubs.*')->where('is_winner', 'No')
-    						->where('country', '!=', $countryName)
-    						->whereNotIn('id', $skipId)->distinct('clubs.country')
-    						->inRandomOrder()->limit(3)->get();
+        info('----------------------------');
+        $skipIds = explode(',', $skipId);
+        $country[] = $countryName; 
+        $getIds ;
 
+        for ($i=0; $i < 3; $i++) { 
+            $uniqueCountry = \DB::table('clubs')->select('id', 'country')->where('is_winner', 'No')->whereNotIn('country', $country)->whereNotIn('id', $skipIds)->groupBy('id','country')->limit(1)->first(); 
+            $country[]  = $uniqueCountry->country; 
+            $skipIds = Arr::prepend($skipIds, $uniqueCountry->id);
+            $getIds[]  = $uniqueCountry->id;
+        } 
+       
+      
+        info(json_encode($country));
+        info('----------------------------');
+        info(json_encode($getIds));
+        return self::whereIn('id', $getIds)->inRandomOrder()->get()->toArray();
     }
 }

@@ -8,11 +8,11 @@ use App\Club;
 class ClubController extends Controller
 {
 
-    protected $club; 
+    /*protected $club; 
 
     public function __construct(Club $club){
         $this->club = $club; 
-    }
+    }*/
     /**
      * Display a listing of the resource.
      *
@@ -30,8 +30,8 @@ class ClubController extends Controller
      * 
      */
     public function groupListFromAPI(){
-       
-        $data['groups'] = $this->club->getClubList(); 
+        $clubInstance  =  new Club;
+        $data['groups'] = $clubInstance->getClubList(); 
         return response()->json($data);
     }
 
